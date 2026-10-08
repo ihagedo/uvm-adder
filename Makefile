@@ -68,10 +68,10 @@ else
   $(error SIM must be verilator, questa, xcelium or vcs)
 endif
 
-.PHONY: help build run waves gui clean
+.PHONY: help build run check-bug waves gui clean
 
 help:
-	@echo "make build | run | waves | gui | clean"
+	@echo "make build | run | check-bug | waves | gui | clean"
 	@echo "knobs: SIM=verilator|questa|xcelium|vcs TEST SEED VERB BUG WAVES JOBS UVM_HOME"
 	@echo "e.g.   make run SIM=questa SEED=3   or   make run BUG=1"
 
@@ -96,6 +96,15 @@ run: $(STAMP)
 	  if grep -qE '^(# )?UVM_ERROR :\s+0\s*$$' sim.log && grep -qE '^(# )?UVM_FATAL :\s+0\s*$$' sim.log; then \
 	    echo "PASS $(TEST) seed=$(SEED) sim=$(SIM)"; \
 	  else echo "FAIL $(TEST) seed=$(SEED) sim=$(SIM): see $(RUNDIR)/sim.log"; exit 1; fi
+
+# The seeded bug must build, run, and be caught by the comparator (a build failure is not a catch)
+check-bug:
+	@$(MAKE) --no-print-directory build BUG=1
+	@if $(MAKE) --no-print-directory run BUG=1 >/dev/null 2>&1; then \
+	  echo "FAIL BUG=1 passed: the testbench missed the seeded bug (sim=$(SIM))"; exit 1; fi
+	@grep -q "Data mismatch" $(ROOT)/build/$(SIM)_bug/runs/$(TEST)_s$(SEED)/sim.log \
+	  && echo "PASS BUG=1 caught by the comparator (sim=$(SIM))" \
+	  || { echo "FAIL BUG=1 run failed without a comparator mismatch (sim=$(SIM))"; exit 1; }
 
 waves:
 	@$(MAKE) --no-print-directory run WAVES=1
