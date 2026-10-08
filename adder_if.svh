@@ -10,13 +10,14 @@ interface adder_if #(parameter BIT_WIDTH = 4) (input logic clk);
 
   logic [BIT_WIDTH - 1:0] sum;
   logic overflow;
-  
-  logic check = 1;
+
+  // Testbench only (not a DUT port): high while a, b and carry_in hold a transaction
+  logic valid;
 
   modport tester
   (
     input sum, overflow, clk,
-    output n_rst, a, b, carry_in
+    output n_rst, a, b, carry_in, valid
   );
 
   modport adder

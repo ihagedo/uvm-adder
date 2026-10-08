@@ -1,7 +1,3 @@
-import uvm_pkg::*;
-`include "uvm_macros.svh"
-`include "transaction.svh"
-
 class adder_sequence extends uvm_sequence#(transaction);
   `uvm_object_utils(adder_sequence)
 

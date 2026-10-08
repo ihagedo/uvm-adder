@@ -1,9 +1,3 @@
-import uvm_pkg::*;
-`include "uvm_macros.svh"
-`include "sequence.svh"
-`include "driver.svh"
-`include "monitor.svh"
-
 class agent extends uvm_agent;
   `uvm_component_utils(agent)
   sequencer sqr;

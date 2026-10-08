@@ -1,7 +1,3 @@
-import uvm_pkg::*;
-`include "uvm_macros.svh"
-`include "environment.svh"
-
 class test extends uvm_test;
   `uvm_component_utils(test)
 
@@ -28,7 +24,7 @@ class test extends uvm_test;
 
   task run_phase(uvm_phase phase);
     phase.raise_objection(this, "Starting sequence in main phase");
-    $display("%t Starting sequence run_phase", $time);
+    `uvm_info("Test", "Starting sequence", UVM_LOW)
     seq.start(env.agt.sqr);
     #100ns;
     phase.drop_objection(this, "Finished in main phase");

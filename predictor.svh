@@ -1,7 +1,3 @@
-import uvm_pkg::*;
-`include "uvm_macros.svh"
-`include "transaction.svh"
-
 class predictor extends uvm_subscriber#(transaction);
   `uvm_component_utils(predictor)
 

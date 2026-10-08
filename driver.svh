@@ -1,7 +1,3 @@
-import uvm_pkg::*;
-`include "uvm_macros.svh"
-`include "adder_if.svh"
-
 class driver extends uvm_driver#(transaction);
   `uvm_component_utils(driver)
 
@@ -21,24 +17,31 @@ class driver extends uvm_driver#(transaction);
 
   task run_phase(uvm_phase phase);
     transaction req_item;
-    vif.check = 0;
+    DUT_reset();
 
     forever begin
       seq_item_port.get_next_item(req_item);
-      DUT_reset();
+      // Drive on the falling edge so the DUT and the monitor see stable inputs on the rising edge
+      @(negedge vif.clk);
       vif.a = req_item.a;
       vif.b = req_item.b;
       vif.carry_in = req_item.carry_in;
-      #(0.2)
-      @(posedge vif.clk);
+      vif.valid = 1;
+      @(negedge vif.clk);
+      vif.valid = 0;
       seq_item_port.item_done();
     end
   endtask: run_phase
 
+  // Hold the DUT in reset for two clocks
   task DUT_reset();
-    @(posedge vif.clk);
+    vif.valid = 0;
+    vif.a = 0;
+    vif.b = 0;
+    vif.carry_in = 0;
+    vif.n_rst = 0;
+    repeat (2) @(negedge vif.clk);
     vif.n_rst = 1;
-    @(posedge vif.clk);
   endtask
 
 endclass: driver

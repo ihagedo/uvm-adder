@@ -1,11 +1,3 @@
-import uvm_pkg::*;
-`include "uvm_macros.svh"
-`include "agent.svh"
-`include "adder_if.svh"
-`include "comparator.svh"
-`include "predictor.svh"
-`include "transaction.svh"
-
 class environment extends uvm_env;
   `uvm_component_utils(environment)
 
@@ -14,7 +6,7 @@ class environment extends uvm_env;
   comparator comp;
 
   function new(string name = "env", uvm_component parent = null);
-		super.new(name, parent);
+    super.new(name, parent);
   endfunction
 
   function void build_phase(uvm_phase phase);

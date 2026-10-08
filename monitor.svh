@@ -1,15 +1,10 @@
-import uvm_pkg::*;
-`include "uvm_macros.svh"
-`include "adder_if.svh"
-
 class monitor extends uvm_monitor;
   `uvm_component_utils(monitor)
 
   virtual adder_if vif;
 
-  uvm_analysis_port#(transaction) adder_ap;
-  uvm_analysis_port#(transaction) result_ap;
-  transaction prev_tx; // check if new transaction has been sent
+  uvm_analysis_port#(transaction) adder_ap;  // inputs, to the predictor
+  uvm_analysis_port#(transaction) result_ap; // inputs and DUT outputs, to the comparator
 
   function new(string name, uvm_component parent = null);
     super.new(name, parent);
@@ -24,25 +19,22 @@ class monitor extends uvm_monitor;
   endfunction
 
   virtual task run_phase(uvm_phase phase);
-    super.run_phase(phase);
-    prev_tx = transaction#(4)::type_id::create("prev_tx");
     forever begin
       transaction tx;
       @(posedge vif.clk);
+      // Only edges where the driver marked a transaction (and reset is released) count
+      if (vif.n_rst !== 1'b1 || vif.valid !== 1'b1) continue;
+      // The DUT registers these inputs on this edge...
       tx = transaction#(4)::type_id::create("tx");
       tx.a = vif.a;
       tx.b = vif.b;
       tx.carry_in = vif.carry_in;
-
-      if (!tx.input_equal(prev_tx)) begin // if new transaction has been sent
-        adder_ap.write(tx);
-        // get outputs from DUT and send to scoreboard/comparator
-	@(posedge vif.clk)
-        tx.result_sum = vif.sum;
-        tx.result_overflow = vif.overflow;
-        result_ap.write(tx);
-        prev_tx.copy(tx);
-      end
+      adder_ap.write(tx);
+      // ...and its outputs are stable by the falling edge
+      @(negedge vif.clk);
+      tx.result_sum = vif.sum;
+      tx.result_overflow = vif.overflow;
+      result_ap.write(tx);
     end
   endtask: run_phase
 endclass: monitor
